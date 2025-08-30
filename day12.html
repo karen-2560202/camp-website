@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <title>今日の1冊</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    #bookName { width: 300px; }
+    #author { width: 200px; }
+    #bookStarting { width: 400px; }
+  </style>
+</head>
+<body>
+<main class="container">
+  <h1>今日の1冊</h1>
+  
+  <div>
+    <h2 id="bookName"></h2>
+    <h3 id="author"></h3>
+    <p id="bookStarting"></p>
+  </div>
+</main>
+
+<script>
+  // CSVを読み込む
+  fetch("books.csv")
+    .then(res => res.text())
+    .then(text => {
+      // 1行ずつに分割
+      const rows = text.trim().split("\n").map(line => line.split(","));
+      
+      // ヘッダーを除いたデータ部分
+      const data = rows.slice(1);
+
+      // ランダムに1冊選ぶ
+      const randomBook = data[Math.floor(Math.random() * data.length)];
+
+      // CSVの列順に合わせて代入（例: 作品名, 著者, 書き出し）
+      document.getElementById("bookName").textContent = randomBook[0];
+      document.getElementById("author").textContent = randomBook[1];
+      document.getElementById("bookStarting").textContent = randomBook[2];
+    })
+    .catch(err => console.error("エラー:", err));
+</script>
+</body>
+</html>
