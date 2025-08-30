@@ -35,9 +35,9 @@
       const randomBook = data[Math.floor(Math.random() * data.length)];
 
       // CSVの列順に合わせて代入（例: 作品名, 著者, 書き出し）
-      document.getElementById("bookName").textContent = randomBook[2];
-      document.getElementById("author").textContent = randomBook[16];
-      document.getElementById("bookStarting").textContent = randomBook[58];
+      document.getElementById("bookName").textContent = randomBook[1];
+      document.getElementById("author").textContent = randomBook[15];
+      document.getElementById("bookStarting").textContent = randomBook[57];
     })
     .catch(err => console.error("エラー:", err));
 </script>
