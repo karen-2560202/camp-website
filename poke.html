@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
   <title>今日のポケモン</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  
   <style>
     #pokemon {
       width: 300px;
@@ -11,6 +13,23 @@
     #pokemonImage {
       width: 100%;
     }
+    #regionSelect {
+  padding: 8px;
+  font-weight: bold;
+  border-radius: 8px;
+  border: 3px solid #2a75bb;
+  background-color: #ffcb05;
+  color: #2a75bb;
+}
+
+  h1, #pokemonName {
+    font-family: 'Press Start 2P', cursive;
+    color: #ffcb05; /* ポケモンのイエロー */
+    text-shadow: 2px 2px #2a75bb; /* 青色の影 */
+  }
+</style>
+
+
   </style>
 </head>
 <body>
@@ -21,6 +40,25 @@
   <div id="pokemon">
     <h2 id="pokemonName"></h2>
     <img id="pokemonImage" src="">
+    <p id="pokemonNumber"></p>
+    <p id="pokemonTypes"></p>
+    <p id="pokemonCategory"></p>
+    <p id="pokemonDescription"></p>
+    <label for="regionSelect">地方を選ぶ</label>
+    <select id="regionSelect">
+          <option value="red">カントー（赤・緑）</option>
+          <option value="gold">ジョウト（金・銀）</option>
+          <option value="ruby">ホウエン（ルビー・サファイア）</option>
+            <option value="diamond">シンオウ（ダイヤ・パール）</option>
+              <option value="black">イッシュ（ブラック・ホワイト）</option>
+               <option value="x">カロス（X・Y）</option>
+               <option value="sun">アローラ（サン・ムーン）</option>
+                 <option value="sword">ガラル（ソード・シールド）</option>
+                 <option value="scarlet">パルデア（スカーレット・バイオレット）</option>
+</select>
+
+
+
   </div>
 </main>
 
@@ -31,8 +69,19 @@
   // ポケモンの画像を表示する要素を取得
   let pokemonImage = document.getElementById('pokemonImage');
 
-  // ポケモンは現在898種
-  let pokemonNumber = Math.floor(Math.random() * 898) + 1;
+  //ポケモンの図鑑番号を表示する要素を取得
+  let pokemonNumberElement = document.getElementById('pokemonNumber');
+
+  //ポケモンのタイプを表示する要素を取得
+  let pokemonTypesElement = document.getElementById('pokemonTypes');
+
+  //ポケモンの図鑑説明を表示する要素を追加
+  let descriptionElement = document.getElementById('pokemonDescription')
+  let regionSelect = document.getElementById('regionSelect')
+  let currentSpeciesData = null;
+
+  // ポケモンは現在1025種
+  let pokemonNumber = Math.floor(Math.random() * 1025 + 1) ;
  
   // PokéAPIからデータを取得し、名前と画像を表示
   fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonNumber}`)
@@ -47,16 +96,92 @@
       // JSONデータをコンソールに出力
       console.log(data);
 
-      // ポケモンの名前を表示
-      pokemonName.textContent = data.name;
-
       // ポケモンの画像を表示
       pokemonImage.src = data.sprites.front_default;
+
+
+    // 図鑑番号を表示（ゼロ埋め3桁）
+    pokemonNumberElement.textContent = `No.${String(pokemonNumber).padStart(3, '0')}`;
+
+    // タイプの英語名リストを取り出す
+    let typePromises = data.types.map(typeInfo => {
+      let typeUrl = typeInfo.type.url;
+      return fetch(typeUrl).then(res => res.json());
+    });
+
+    // タイプを日本語名に変換して表示
+    return Promise.all(typePromises);
+  })
+  .then(typeDataArray => {
+    // 日本語名を取得（language.name === "ja-Hrkt"）
+    let japaneseTypes = typeDataArray.map(typeData => {
+      let jaNameObj = typeData.names.find(name => name.language.name === "ja-Hrkt");
+      return jaNameObj ? jaNameObj.name : typeData.name; // fallback: 英語 
+       });
+
+    pokemonTypesElement.textContent = `タイプ: ${japaneseTypes.join(' / ')}`;
+
+      // 名前は別のエンドポイントから取得（日本語対応）
+    return fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonNumber}`);
+  })
+  .then(function(response) {
+    return response.json();
+  })
+  .then(function(speciesData) {
+          // speciesData を保持して、あとで地方切り替えで使う
+currentSpeciesData = speciesData;
+
+    // 日本語名を抽出（language.name が "ja-Hrkt" のもの）
+    let japaneseName = speciesData.names.find(nameInfo => nameInfo.language.name === "ja-Hrkt");
+
+    // 日本語のポケモン名を表示
+    pokemonName.textContent = japaneseName ? japaneseName.name : "名前不明";
+
+    // 分類（たねポケモンなど）を表示
+  let categoryElement = document.getElementById('pokemonCategory');
+  let japaneseCategory = speciesData.genera.find(genus => genus.language.name === "ja-Hrkt");
+  categoryElement.textContent = japaneseCategory ? `分類: ${japaneseCategory.genus}` : "分類不明";
+
+  //図鑑説明を表示
+  // 全体で使うように保存しておく（speciesDataを保持）
+
+
+
+
+
+// セレクトボックスが変更されたときのイベント
+regionSelect.addEventListener("change", function() {
+  updateDescriptionByRegion(this.value);
+});
+
     })
+
+    
     .catch(function(error) {
       // エラーが発生した場合はコンソールに出力
       console.error(`エラーが発生しました:${error}`);
+
+
+// 
+updateDescriptionByRegion(regionSelect.value);
+
     });
+
+    function updateDescriptionByRegion(regionVersion) {
+  if (!currentSpeciesData) return;
+
+  let entries = currentSpeciesData.flavor_text_entries;
+
+  let entry = entries.find(e => 
+    e.language.name === "ja-Hrkt" && e.version.name === regionVersion
+  );
+
+  if (entry) {
+    descriptionElement.textContent = `説明: ${entry.flavor_text.replace(/\n|\f/g, ' ')}`;
+  } else {
+    descriptionElement.textContent = "この地方には説明文がありません。";
+  }
+}
 </script>
 
 </body>
