@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <title>今日の1枚</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    #artTitle { width: 400px; }
+    #artist { width: 300px; }
+    #artImage { max-width: 100%; margin-top: 1em; border-radius: 12px; }
+  </style>
+</head>
+<body>
+<main class="container">
+  <h1>今日の1枚</h1>
+  
+  <div>
+    <h2 id="artTitle"></h2>
+    <h3 id="artist"></h3>
+    <img id="artImage" alt="作品画像">
+    <p id="artDate"></p>
+  </div>
+</main>
+
+<script>
+  // MET Museum APIでランダム作品を取得
+  fetch("https://collectionapi.metmuseum.org/public/collection/v1/objects")
+    .then(res => res.json())
+    .then(data => {
+      const ids = data.objectIDs;
+      const randomId = ids[Math.floor(Math.random() * ids.length)];
+      return fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${randomId}`);
+    })
+    .then(res => res.json())
+    .then(art => {
+      document.getElementById("artTitle").textContent = art.title || "タイトル不明";
+      document.getElementById("artist").textContent = art.artistDisplayName || "作者不明";
+      document.getElementById("artDate").textContent = art.objectDate || "";
+      document.getElementById("artImage").src = art.primaryImageSmall || "";
+    })
+    .catch(err => console.error("エラー:", err));
+</script>
+</body>
+</html>
+
